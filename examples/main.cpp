@@ -1,4 +1,4 @@
-#include <lightglue.h>
+#include <lightglue/lightglue.h>
 #include <opencv2/opencv.hpp>
 
 int main()

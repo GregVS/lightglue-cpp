@@ -1,5 +1,3 @@
-import pybind11
-import numpy as np
 import torch
 from lightglue import SuperPoint, LightGlue
 import cv2

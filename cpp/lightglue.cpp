@@ -1,4 +1,4 @@
-#include "lightglue.h"
+#include "lightglue/lightglue.h"
 
 #include <opencv2/opencv.hpp>
 #include <pybind11/embed.h>
