@@ -1,14 +1,42 @@
-#include <opencv2/opencv.hpp>
 #include <lightglue.h>
+#include <opencv2/opencv.hpp>
 
-int main() {
-    cv::Mat img = cv::imread("assets/frame0.jpg");
+int main()
+{
+    cv::Mat frame0 = cv::imread("assets/frame0.png");
+    cv::Mat frame1 = cv::imread("assets/frame1.png");
 
     // Feature extraction
     lightglue::FeatureExtractor extractor;
-    auto [keypoints, descriptors] = extractor.extract_features(img);
-    std::cout << "Keypoints: " << keypoints.size() << std::endl;
-    std::cout << "Descriptors: " << descriptors.size() << std::endl;
+    auto [kps0, descs0] = extractor.extract_features(frame0);
+    auto [kps1, descs1] = extractor.extract_features(frame1);
+
+    // Feature matching
+    auto matches = extractor
+                       .match_features(kps0, kps1, descs0, descs1, frame0.size(), frame1.size());
+
+    std::cout << "Matches: " << matches.size() << std::endl;
+
+    cv::Mat left_frame = frame0.clone();
+    cv::Mat right_frame = frame1.clone();
+    for (const auto& match : matches) {
+        cv::Scalar color = cv::Scalar(rand() % 256, rand() % 256, rand() % 256);
+        auto train_pt = kps0[match.trainIdx].pt;
+        cv::circle(left_frame, train_pt, 4, color, -1);
+
+        auto query_pt = kps1[match.queryIdx].pt;
+        cv::circle(right_frame, query_pt, 4, color, -1);
+    }
+
+    cv::Mat display_image = cv::Mat(left_frame.rows,
+                                    left_frame.cols + right_frame.cols,
+                                    left_frame.type());
+    left_frame.copyTo(display_image(cv::Rect(0, 0, left_frame.cols, left_frame.rows)));
+    right_frame.copyTo(
+        display_image(cv::Rect(left_frame.cols, 0, right_frame.cols, right_frame.rows)));
+
+    cv::imshow("Feature Matching", display_image);
+    cv::waitKey(0);
 
     return 0;
 }

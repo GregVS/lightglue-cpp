@@ -12,14 +12,15 @@ class FeatureExtractor:
 
     def extract_features(self, img):
         """
-        Extract features from an image
         Args:
-            img: numpy array (grayscale)
+            img: numpy array in BGR (H,W,3)
         Returns:
             keypoints: numpy array (N,2)
             descriptors: numpy array (N,256)
         """
-        torch_img = torch.from_numpy(img).float() / 255.0
+        gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        torch_img = torch.from_numpy(gray_img).float() / 255.0
         torch_img = torch_img.unsqueeze(0).to(self.device)
 
         with torch.no_grad():
@@ -27,36 +28,34 @@ class FeatureExtractor:
         
         keypoints = feats['keypoints'][0].cpu().numpy()
         descriptors = feats['descriptors'][0].cpu().numpy()
-        
+
         return keypoints, descriptors
 
-    def match_features(self, kpts0, kpts1, desc0, desc1):
+    def match_features(self, kpts0, kpts1, desc0, desc1, w0, h0, w1, h1):
         """
-        Match features between two images
         Args:
             kpts0, kpts1: numpy arrays (N,2) of keypoints
             desc0, desc1: numpy arrays (N,256) of descriptors
+            w0, h0, w1, h1: image sizes
         Returns:
             matches: numpy array (M,2) of indices
             scores: numpy array (M,) of matching scores
         """
         feats0 = {
-            'keypoints': torch.from_numpy(kpts0).to(self.device)[None],
-            'descriptors': torch.from_numpy(desc0).to(self.device)[None],
+            'keypoints': torch.from_numpy(kpts0).to(self.device).unsqueeze(0),
+            'descriptors': torch.from_numpy(desc0).to(self.device).unsqueeze(0),
+            'image_size': torch.tensor([w0, h0]).to(self.device).unsqueeze(0),
         }
         feats1 = {
-            'keypoints': torch.from_numpy(kpts1).to(self.device)[None],
-            'descriptors': torch.from_numpy(desc1).to(self.device)[None],
+            'keypoints': torch.from_numpy(kpts1).to(self.device).unsqueeze(0),
+            'descriptors': torch.from_numpy(desc1).to(self.device).unsqueeze(0),
+            'image_size': torch.tensor([w1, h1]).to(self.device).unsqueeze(0),
         }
 
         with torch.no_grad():
-            matches = self.matcher({"image0": feats0, "image1": feats1})
+            result = self.matcher({"image0": feats0, "image1": feats1})
 
-        matches = matches['matches0'][0].cpu().numpy()
-        scores = matches['scores'][0].cpu().numpy()
-        
-        valid = matches > -1
-        matches = np.stack([np.where(valid)[0], matches[valid]], axis=1)
-        scores = scores[valid]
+        matches = result['matches'][0].cpu().numpy()
+        scores = result['scores'][0].cpu().numpy()
         
         return matches, scores
