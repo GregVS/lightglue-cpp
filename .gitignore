@@ -1,0 +1,6 @@
+venv
+vcpkg-configuration.json
+cmake/
+build/
+.vscode/
+__pycache__/
