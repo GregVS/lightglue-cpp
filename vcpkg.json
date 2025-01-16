@@ -1,0 +1,6 @@
+{
+    "dependencies": [
+        "opencv",
+        "pybind11"
+    ]
+}
