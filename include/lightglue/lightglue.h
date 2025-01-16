@@ -9,7 +9,7 @@ namespace lightglue {
 
 class FeatureExtractor {
   public:
-    FeatureExtractor(int max_keypoints = 1024);
+    FeatureExtractor(int max_keypoints = 1024, float detection_threshold = 0.0005, int nms_radius=4);
 
     std::tuple<std::vector<cv::KeyPoint>, cv::Mat> extract_features(const cv::Mat& image);
 

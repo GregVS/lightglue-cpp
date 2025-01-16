@@ -3,9 +3,11 @@ from lightglue import SuperPoint, LightGlue
 import cv2
 
 class FeatureExtractor:
-    def __init__(self, max_keypoints=1024):
+    def __init__(self, max_keypoints=1024, detection_threshold=0.005, nms_radius=4):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.extractor = SuperPoint(max_num_keypoints=max_keypoints).eval().to(self.device)
+        self.extractor = SuperPoint(max_num_keypoints=max_keypoints, 
+                                    detection_threshold=detection_threshold, 
+                                    nms_radius=nms_radius).eval().to(self.device)
         self.matcher = LightGlue(features='superpoint').eval().to(self.device)
 
     def extract_features(self, img):
@@ -25,9 +27,10 @@ class FeatureExtractor:
             feats = self.extractor.extract(torch_img)
         
         keypoints = feats['keypoints'][0].cpu().numpy()
+        keypoint_scores = feats['keypoint_scores'][0].cpu().numpy()
         descriptors = feats['descriptors'][0].cpu().numpy()
 
-        return keypoints, descriptors
+        return keypoints, descriptors, keypoint_scores
 
     def match_features(self, kpts0, kpts1, desc0, desc1, w0, h0, w1, h1):
         """

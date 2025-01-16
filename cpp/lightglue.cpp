@@ -6,14 +6,14 @@
 namespace py = pybind11;
 using lightglue::FeatureExtractor;
 
-FeatureExtractor::FeatureExtractor(int max_keypoints)
+FeatureExtractor::FeatureExtractor(int max_keypoints, float detection_threshold, int nms_radius)
 {
     if (!Py_IsInitialized()) {
         py::initialize_interpreter();
     }
 
     py::module_ feature_module = py::module_::import("python.binding");
-    py_extractor = feature_module.attr("FeatureExtractor")(max_keypoints);
+    py_extractor = feature_module.attr("FeatureExtractor")(max_keypoints, detection_threshold, nms_radius);
 }
 
 std::tuple<std::vector<cv::KeyPoint>, cv::Mat>
@@ -34,10 +34,11 @@ FeatureExtractor::extract_features(const cv::Mat& image)
     // Convert to OpenCV image
     py::array_t<float> kpts = result.cast<py::tuple>()[0].cast<py::array_t<float>>();
     py::array_t<float> desc = result.cast<py::tuple>()[1].cast<py::array_t<float>>();
+    py::array_t<float> scores = result.cast<py::tuple>()[2].cast<py::array_t<float>>();
 
     std::vector<cv::KeyPoint> keypoints;
     for (int i = 0; i < kpts.shape(0); ++i) {
-        keypoints.push_back(cv::KeyPoint(kpts.at(i, 0), kpts.at(i, 1), 1));
+        keypoints.push_back(cv::KeyPoint(kpts.at(i, 0), kpts.at(i, 1), 1, -1, scores.at(i)));
     }
 
     cv::Mat descriptors(desc.shape(0), desc.shape(1), CV_32F, const_cast<float*>(desc.data()));

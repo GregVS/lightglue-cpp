@@ -7,7 +7,7 @@ int main()
     cv::Mat frame1 = cv::imread("assets/frame1.png");
 
     // Feature extraction
-    lightglue::FeatureExtractor extractor;
+    lightglue::FeatureExtractor extractor(2048, 0.05);
     auto [kps0, descs0] = extractor.extract_features(frame0);
     auto [kps1, descs1] = extractor.extract_features(frame1);
 
@@ -21,11 +21,13 @@ int main()
     cv::Mat right_frame = frame1.clone();
     for (const auto& match : matches) {
         cv::Scalar color = cv::Scalar(rand() % 256, rand() % 256, rand() % 256);
-        auto train_pt = kps0[match.trainIdx].pt;
-        cv::circle(left_frame, train_pt, 4, color, -1);
+        auto train_pt = kps0[match.trainIdx];
+        auto score = train_pt.response;
+        std::cout << "Score: " << score << std::endl;
+        cv::circle(left_frame, train_pt.pt, 10 * score + 2, color, -1);
 
-        auto query_pt = kps1[match.queryIdx].pt;
-        cv::circle(right_frame, query_pt, 4, color, -1);
+        auto query_pt = kps1[match.queryIdx];
+        cv::circle(right_frame, query_pt.pt, 4, color, -1);
     }
 
     cv::Mat display_image = cv::Mat(left_frame.rows,
