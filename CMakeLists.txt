@@ -1,17 +1,8 @@
 cmake_minimum_required(VERSION 3.10)
 project(lightglue VERSION 1.0.0)
 
-set(Python3_FIND_VIRTUALENV FIRST) 
 find_package(OpenCV CONFIG REQUIRED)
 find_package(pybind11 CONFIG REQUIRED)
-find_package(Python3 REQUIRED)
-execute_process(
-    COMMAND ${Python3_EXECUTABLE} -m pip install -r ${CMAKE_CURRENT_SOURCE_DIR}/python/requirements.txt
-    RESULT_VARIABLE result
-)
-if(result)
-    message(FATAL_ERROR "Failed to install Python dependencies")
-endif()
 
 # Library
 add_library(lightglue
